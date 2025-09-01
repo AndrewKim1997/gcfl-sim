@@ -1,18 +1,25 @@
 <p align="center">
-  <!-- Optional badges (delete or add more as you like) -->
-  <a href="https://arxiv.org/abs/XXXX.XXXXX">
-    <img alt="arXiv"
-         src="https://img.shields.io/badge/arXiv-XXXX.XXXXX-b31b1b?style=flat-square&logo=arxiv&logoColor=white">
+  <a href="https://www.sciencedirect.com/journal/applied-soft-computing">
+    <img alt="Journal: Applied Soft Computing"
+         src="https://img.shields.io/badge/Applied%20Soft%20Computing-1e3787?style=flat-square&logo=elsevier&logoColor=white&labelColor=1e3787">
   </a>
-  <a href="https://github.com/AndrewKim1997/gcfl-sim/actions/workflows/ci.yml">
+  <a href="https://github.com/AndrewKim1997/federated-regressive-learning/actions/workflows/ci.yml">
     <img alt="CI"
-         src="https://img.shields.io/github/actions/workflow/status/AndrewKim1997/gcfl-sim/ci.yml?branch=main&style=flat-square&logo=githubactions&logoColor=white&label=CI">
+         src="https://img.shields.io/github/actions/workflow/status/AndrewKim1997/federated-regressive-learning/ci.yml?branch=main&style=flat-square&logo=githubactions&logoColor=white&label=CI&labelColor=1f2937">
+  </a>
+  <a href="https://github.com/AndrewKim1997/federated-regressive-learning/actions/workflows/docker.yml">
+    <img alt="Docker images"
+         src="https://img.shields.io/github/actions/workflow/status/AndrewKim1997/federated-regressive-learning/docker.yml?branch=main&style=flat-square&logo=docker&logoColor=white&label=Docker%20images&labelColor=2496ED">
+  </a>
+  <a href="docs/DOCKER.md">
+    <img alt="Docker docs"
+         src="https://img.shields.io/badge/Docker-docs-2496ED?style=flat-square&logo=docker&logoColor=white&labelColor=2496ED">
   </a>
   <img alt="Python 3.10–3.12"
-       src="https://img.shields.io/badge/Python%203.10%E2%80%933.12-3776AB?style=flat-square&logo=python&logoColor=white">
+       src="https://img.shields.io/badge/Python%203.10%E2%80%933.12-3776AB?style=flat-square&logo=python&logoColor=white&labelColor=3776AB">
   <a href="LICENSE">
     <img alt="License: MIT"
-         src="https://img.shields.io/badge/License-MIT-16a34a?style=flat-square">
+         src="https://img.shields.io/badge/License%3A%20MIT-16a34a?style=flat-square&logo=opensourceinitiative&logoColor=white&labelColor=16a34a">
   </a>
 </p>
 
