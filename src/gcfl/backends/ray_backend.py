@@ -5,7 +5,6 @@ Requires: `pip install ray`. If Ray is not available, importing this module will
 """
 from __future__ import annotations
 from typing import List
-import numpy as np
 import pandas as pd
 
 try:  # import check at module load
