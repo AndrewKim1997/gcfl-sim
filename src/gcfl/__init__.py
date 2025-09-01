@@ -9,7 +9,7 @@ Public surface (stable):
 from __future__ import annotations
 
 from . import engine, params, rng, types  # re-export modules
-from .utils_version import __version__ if False else None  # placeholder if you add versioning
+from .utils.version import package_version
 
 __all__ = ["engine", "params", "rng", "types"]
-__version__ = "0.1.0"
+__version__ = package_version()
