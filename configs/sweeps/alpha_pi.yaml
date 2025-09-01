@@ -1,0 +1,17 @@
+# Sweep α × π for M / PoG panels (and any custom analysis you run afterward).
+base: ../base.yaml
+
+# Optional runtime overrides for the sweep (faster smoke defaults)
+engine:
+  repeats: 1
+  rounds: 30
+
+sweep:
+  grid:
+    mechanism.alpha: {start: 0.0, stop: 8.0, num: 121}
+    mechanism.pi:    {start: 0.0, stop: 1.0, num: 61}
+
+# Informational only (gcfl-sweep takes -o/--out); keep for documentation.
+output:
+  path: results/logs/alpha_pi.parquet
+  format: parquet
