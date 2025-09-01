@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  ray-head:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        EXTRAS: "dist"
+    image: gcfl-sim:dist
+    container_name: gcfl-ray-head
+    command: >
+      bash -lc "ray start --head --port=6379 --dashboard-host=0.0.0.0 --dashboard-port=8265 && tail -f /dev/null"
+    ports:
+      - "8265:8265"          # Ray dashboard
+    volumes:
+      - ..:/workspace
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  ray-worker:
+    image: gcfl-sim:dist
+    depends_on:
+      - ray-head
+    command: >
+      bash -lc "ray start --address=ray-head:6379 && tail -f /dev/null"
+    volumes:
+      - ..:/workspace
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  runner:
+    image: gcfl-sim:dist
+    depends_on:
+      - ray-head
+      - ray-worker
+    working_dir: /workspace
+    entrypoint: ["bash","-lc"]
+    command: >
+      "python -m gcfl.run -c configs/base.yaml --backend ray -o results/logs/ray_run.parquet"
+    volumes:
+      - ..:/workspace
+    environment:
+      - PYTHONUNBUFFERED=1
