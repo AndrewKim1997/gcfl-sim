@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
 
+
 def _root_int(seed_or_ss: int | None | np.random.SeedSequence) -> int:
     """
     Convert user-provided seed or SeedSequence to a deterministic 32-bit int root.
@@ -20,7 +21,9 @@ def make_seedseq(seed_root: int | None = None) -> np.random.SeedSequence:
     return np.random.SeedSequence(_root_int(seed_root))
 
 
-def substream(seed_or_ss: int | np.random.SeedSequence | None, *keys: int) -> np.random.SeedSequence:
+def substream(
+    seed_or_ss: int | np.random.SeedSequence | None, *keys: int
+) -> np.random.SeedSequence:
     """
     Deterministically derive a child SeedSequence from (root, keys...),
     without consuming state (no .spawn()).
@@ -29,7 +32,9 @@ def substream(seed_or_ss: int | np.random.SeedSequence | None, *keys: int) -> np
     entropy = [root] + [int(k) & 0xFFFFFFFF for k in keys]
     return np.random.SeedSequence(entropy)
 
+
 # ---- bundle ----
+
 
 @dataclass(frozen=True)
 class RngBundle:
@@ -39,13 +44,16 @@ class RngBundle:
     for the given (tag, keys). Repeated calls with the same arguments
     produce identical sequences.
     """
+
     _root: int
 
     def __init__(self, seed_or_ss: int | np.random.SeedSequence | None):
         object.__setattr__(self, "_root", _root_int(seed_or_ss))
 
     def gen(self, tag: int, *keys: int) -> np.random.Generator:
-        ss = np.random.SeedSequence([self._root, int(tag) & 0xFFFFFFFF, *[int(k) & 0xFFFFFFFF for k in keys]])
+        ss = np.random.SeedSequence(
+            [self._root, int(tag) & 0xFFFFFFFF, *[int(k) & 0xFFFFFFFF for k in keys]]
+        )
         return np.random.default_rng(ss)
 
     # convenience substreams

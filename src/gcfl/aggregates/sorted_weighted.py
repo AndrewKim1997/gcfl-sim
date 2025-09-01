@@ -3,11 +3,13 @@ from typing import Iterable, Sequence
 import numpy as np
 from ..registry import register_aggregator
 
+
 def _clean(values: np.ndarray, nan_policy: str = "omit") -> np.ndarray:
     v = np.asarray(values, dtype=float).ravel()
     if nan_policy == "omit":
         v = v[np.isfinite(v)]
     return v
+
 
 def _resample_weights(weights: Sequence[float], n: int) -> np.ndarray:
     """Resample an arbitrary-length weight vector to length n via linear interpolation."""
@@ -24,6 +26,7 @@ def _resample_weights(weights: Sequence[float], n: int) -> np.ndarray:
         out = np.interp(x_tgt, x_src, w)
     s = out.sum()
     return (out / s) if s > 0 else np.ones(n, dtype=float) / max(n, 1)
+
 
 @register_aggregator("sorted_weighted")
 def aggregate(

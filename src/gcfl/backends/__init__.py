@@ -6,6 +6,7 @@ Each backend exposes:
 
 Use `get_backend(name)` to resolve by string.
 """
+
 from __future__ import annotations
 from typing import Callable, Dict
 
@@ -20,12 +21,14 @@ _BACKENDS: Dict[str, Callable] = {
 # Optional backends — register if importable
 try:
     from . import ray_backend as _ray
+
     _BACKENDS["ray"] = _ray.run
 except Exception:  # pragma: no cover
     pass
 
 try:
     from . import dask_backend as _dask
+
     _BACKENDS["dask"] = _dask.run
 except Exception:  # pragma: no cover
     pass

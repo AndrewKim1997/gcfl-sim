@@ -14,6 +14,7 @@ _DEFAULTS: dict[str, Any] = {
     "logging": {"out_format": "parquet", "float_precision": 6},
 }
 
+
 def _merge(a: dict, b: Mapping[str, Any]) -> dict:
     out = deepcopy(a)
     for k, v in b.items():
@@ -22,6 +23,7 @@ def _merge(a: dict, b: Mapping[str, Any]) -> dict:
         else:
             out[k] = deepcopy(v)
     return out
+
 
 def load_config(path_or_obj: str | _p.Path | Mapping[str, Any]) -> dict:
     """

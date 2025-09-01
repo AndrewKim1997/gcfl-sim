@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Dict, MutableMapping, Any
 import numpy as np
 from ..registry import register_mechanism
+
 """
 u_orth_penalty: penalize the component of the monitoring signal s that is orthogonal to u.
 
@@ -25,9 +26,12 @@ Parameters (from cfg["mechanism"]):
     benign_threshold: float
     neutralize_when_deltaU_ge_0: bool
 """
+
+
 def _center(x: np.ndarray) -> np.ndarray:
     x = np.asarray(x, dtype=float).ravel()
     return x - x.mean()
+
 
 def _orth_component(s: np.ndarray, u: np.ndarray) -> np.ndarray:
     """Return the component of s that is orthogonal to u (both treated as centered)."""
@@ -40,6 +44,7 @@ def _orth_component(s: np.ndarray, u: np.ndarray) -> np.ndarray:
     proj = (np.dot(su, uu) / denom) * uu
     return su - proj
 
+
 def _orth_magnitude_avg(s: np.ndarray, u: np.ndarray) -> float:
     """Average absolute orthogonal magnitude (L1/N), robust to zeros/NaNs."""
     orth = _orth_component(s, u)
@@ -49,6 +54,7 @@ def _orth_magnitude_avg(s: np.ndarray, u: np.ndarray) -> float:
     if not finite.any():
         return 0.0
     return float(np.mean(np.abs(orth[finite])))
+
 
 @register_mechanism("u_orth_penalty")
 def mechanism(

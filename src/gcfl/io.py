@@ -1,6 +1,7 @@
 """
 I/O utilities: safe writing to CSV/Parquet and lightweight provenance capture.
 """
+
 from __future__ import annotations
 from typing import Any, Dict
 import json
@@ -10,6 +11,7 @@ import socket
 import subprocess
 import shutil
 import pandas as pd
+
 
 def write_table(df: pd.DataFrame, out_path: str, fmt: str = "parquet") -> str:
     """
@@ -21,6 +23,7 @@ def write_table(df: pd.DataFrame, out_path: str, fmt: str = "parquet") -> str:
     if fmt == "parquet":
         try:
             import pyarrow  # noqa
+
             path = base + ".parquet" if ext.lower() not in {".parq", ".parquet"} else out_path
             df.to_parquet(path, index=False)
             return path
@@ -34,17 +37,21 @@ def write_table(df: pd.DataFrame, out_path: str, fmt: str = "parquet") -> str:
         df.to_csv(path, index=False)
         return path
 
+
 def _git_info() -> Dict[str, Any]:
     if not shutil.which("git"):
         return {"git": False}
     try:
         commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
-        branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], text=True).strip()
+        branch = subprocess.check_output(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"], text=True
+        ).strip()
         status = subprocess.check_output(["git", "status", "--porcelain"], text=True)
         dirty = bool(status.strip())
         return {"git": True, "commit": commit, "branch": branch, "dirty": dirty}
     except Exception:
         return {"git": False}
+
 
 def provenance(extra: Dict[str, Any] | None = None) -> Dict[str, Any]:
     """
@@ -65,6 +72,7 @@ def provenance(extra: Dict[str, Any] | None = None) -> Dict[str, Any]:
     if extra:
         info.update(extra)
     return info
+
 
 def write_provenance(path_no_ext: str, meta: Dict[str, Any]) -> str:
     """

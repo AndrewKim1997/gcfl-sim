@@ -4,11 +4,14 @@ import numpy as np
 
 # ---------- Plugin protocols (interfaces) ----------
 
+
 class Aggregator(Protocol):
     def __call__(self, values: np.ndarray, **kwargs) -> float: ...
 
+
 class SignalModel(Protocol):
     def __call__(self, u: np.ndarray, rng: np.random.Generator, **kwargs) -> np.ndarray: ...
+
 
 class Mechanism(Protocol):
     def __call__(
@@ -25,7 +28,9 @@ class Mechanism(Protocol):
         Returns a dict of round-level metrics (e.g., {'M': m, 'PoG': ..., 'PoC': ..., 'DeltaU': ...}).
         """
 
+
 # ---------- Config & logging types ----------
+
 
 class EngineConfig(TypedDict, total=False):
     meta: dict
@@ -35,6 +40,7 @@ class EngineConfig(TypedDict, total=False):
     aggregator: dict
     mechanism: dict
     logging: dict
+
 
 class LogRow(TypedDict, total=False):
     repeat: int

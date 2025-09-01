@@ -18,12 +18,13 @@ from .utils.logging import get_logger, log_provenance
 from .utils.profiling import Timer
 from .registry import seed_with, get_aggregator, get_signal, get_mechanism
 from . import aggregates as _agg_pkg  # noqa: F401
-from . import signals as _sig_pkg     # noqa: F401
-from . import mechanisms as _mech_pkg # noqa: F401
+from . import signals as _sig_pkg  # noqa: F401
+from . import mechanisms as _mech_pkg  # noqa: F401
 from . import engine as _engine
 from .backends import get_backend
 
 # ---- helpers ----
+
 
 def _set_nested(cfg: Dict[str, Any], dotted_key: str, value: Any) -> None:
     parts = dotted_key.split(".")
@@ -31,6 +32,7 @@ def _set_nested(cfg: Dict[str, Any], dotted_key: str, value: Any) -> None:
     for p in parts[:-1]:
         d = d.setdefault(p, {})
     d[parts[-1]] = value
+
 
 def _expand_spec(spec: Any) -> List[Any]:
     if spec is None:
@@ -44,6 +46,7 @@ def _expand_spec(spec: Any) -> List[Any]:
         return list(np.linspace(start, stop, num))
     return [spec]
 
+
 def _load_sweep_config(path: str) -> Tuple[Dict[str, Any], Dict[str, List[Any]]]:
     raw = yaml.safe_load(open(path, "r", encoding="utf-8").read()) or {}
     base_path = raw.get("base")
@@ -56,26 +59,40 @@ def _load_sweep_config(path: str) -> Tuple[Dict[str, Any], Dict[str, List[Any]]]
     grid: Dict[str, List[Any]] = {k: _expand_spec(v) for k, v in grid_raw.items()}
     return base_cfg, grid
 
+
 def _product_dict(grid: Dict[str, List[Any]]) -> Iterable[Dict[str, Any]]:
     keys = list(grid)
     for values in itertools.product(*(grid[k] for k in keys)):
         yield dict(zip(keys, values, strict=True))
 
+
 # ---- main ----
+
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         prog="gcfl-sweep",
         description="Run a parameter sweep (grid) and write a single combined table.",
     )
-    ap.add_argument("-c", "--config", required=True, help="Sweep YAML (with 'sweep.grid') or base config YAML")
-    ap.add_argument("-o", "--out", default="results/logs/sweep.parquet", help="Output combined table path")
+    ap.add_argument(
+        "-c", "--config", required=True, help="Sweep YAML (with 'sweep.grid') or base config YAML"
+    )
+    ap.add_argument(
+        "-o", "--out", default="results/logs/sweep.parquet", help="Output combined table path"
+    )
     ap.add_argument("--out-format", choices=["parquet", "csv"], help="Override output format")
 
     # If --config points to a base YAML, you may provide an inline grid via --grid KEY=SPEC
     # SPEC can be a comma list (e.g., 0.1,0.2,0.5) or a linspace dict JSON: {"start":0,"stop":1,"num":11}
-    ap.add_argument("--grid", action="append", metavar="KEY=SPEC", help='Inline grid, e.g. --grid "mechanism.alpha=0.5,1.0,2.0"')
-    ap.add_argument("--experiments-workers", type=int, default=0, help="Parallel experiments (0/1 sequential)")
+    ap.add_argument(
+        "--grid",
+        action="append",
+        metavar="KEY=SPEC",
+        help='Inline grid, e.g. --grid "mechanism.alpha=0.5,1.0,2.0"',
+    )
+    ap.add_argument(
+        "--experiments-workers", type=int, default=0, help="Parallel experiments (0/1 sequential)"
+    )
     ap.add_argument("--seed", type=int, help="Seed root (deterministic)")
 
     # Execution override commonly useful for all experiments
@@ -146,6 +163,7 @@ def main(argv: list[str] | None = None) -> int:
     with Timer("sweep", logger=log):
         if args.experiments_workers and args.experiments_workers > 1:
             import concurrent.futures as _cf
+
             rows: List[pd.DataFrame] = []
             with _cf.ThreadPoolExecutor(max_workers=args.experiments_workers) as ex:
                 for df in ex.map(_run_one, list(enumerate(combos))):

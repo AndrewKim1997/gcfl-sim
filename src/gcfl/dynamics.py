@@ -4,11 +4,13 @@ Deterministic state-update maps and utilities.
 These helpers are optional and can be swapped for your paper-specific dynamics.
 They are written to be numerically stable and testable.
 """
+
 from __future__ import annotations
 from typing import Callable
 import numpy as np
 
 MapFn = Callable[[np.ndarray], np.ndarray]
+
 
 def linear_damped_towards_scalar(alpha: float, step: float = 0.05) -> MapFn:
     """
@@ -17,9 +19,12 @@ def linear_damped_towards_scalar(alpha: float, step: float = 0.05) -> MapFn:
     by closing over m in a lambda. This factory only sets the damping.
     """
     damp = max(0.0, 1.0 - step * float(alpha))
+
     def _map(u: np.ndarray, m: float = 0.0) -> np.ndarray:
         return damp * u + (1.0 - damp) * float(m)
+
     return _map  # usage: f = linear_damped_towards_scalar(alpha); f(u, m=m_val)
+
 
 def logistic_clip(a: float) -> MapFn:
     """
@@ -27,10 +32,13 @@ def logistic_clip(a: float) -> MapFn:
         f(u) = u + a * u * (1 - u), evaluated elementwise and clipped to [-1e6, 1e6].
     """
     a = float(a)
+
     def _map(u: np.ndarray) -> np.ndarray:
         v = u + a * u * (1.0 - u)
         return np.clip(v, -1e6, 1e6)
+
     return _map
+
 
 def iterate_map(u0: np.ndarray, f: Callable[..., np.ndarray], T: int, **kwargs) -> np.ndarray:
     """
@@ -40,6 +48,7 @@ def iterate_map(u0: np.ndarray, f: Callable[..., np.ndarray], T: int, **kwargs) 
     for _ in range(int(T)):
         u = f(u, **kwargs)
     return u
+
 
 def trajectory(u0: np.ndarray, f: Callable[..., np.ndarray], T: int, **kwargs) -> np.ndarray:
     """

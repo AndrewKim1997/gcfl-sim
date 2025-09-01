@@ -2,6 +2,7 @@
 Lightweight profiling helpers (time, CPU profile, and peak memory).
 No external dependencies; safe to import anywhere.
 """
+
 from __future__ import annotations
 from typing import Any, Callable, Tuple
 import os
@@ -11,8 +12,10 @@ import cProfile
 import pstats
 import io as _io
 
+
 class Timer:
     """Context manager for wall-clock timing with perf_counter()."""
+
     def __init__(self, label: str | None = None, logger=None):
         self.label = label
         self.logger = logger
@@ -25,10 +28,11 @@ class Timer:
 
     def __exit__(self, exc_type, exc, tb):
         end = time.perf_counter()
-        self.elapsed = (end - (self.start or end))
+        self.elapsed = end - (self.start or end)
         if self.logger and self.label:
             self.logger.info(f"[timer] {self.label}: {self.elapsed:.6f}s")
         return False
+
 
 def profile_callable(
     fn: Callable[..., Any],
@@ -51,6 +55,7 @@ def profile_callable(
             f.write(stats_text)
     return result, stats_text
 
+
 def trace_peak_memory(fn: Callable[..., Any], *args, **kwargs) -> Tuple[Any, int]:
     """
     Execute `fn(*args, **kwargs)` while measuring peak allocated bytes with tracemalloc.
@@ -64,11 +69,13 @@ def trace_peak_memory(fn: Callable[..., Any], *args, **kwargs) -> Tuple[Any, int
     finally:
         tracemalloc.stop()
 
+
 def profile_if_env(fn: Callable[..., Any]) -> Callable[..., Any]:
     """
     Decorator: enable cProfile when GCFL_PROFILE=1 is set in the environment.
     Writes a short report to stdout (and returns the wrapped result).
     """
+
     def wrapper(*args, **kwargs):
         if os.getenv("GCFL_PROFILE", "0") != "1":
             return fn(*args, **kwargs)
@@ -76,4 +83,5 @@ def profile_if_env(fn: Callable[..., Any]) -> Callable[..., Any]:
         res = pr.runcall(fn, *args, **kwargs)
         pstats.Stats(pr).strip_dirs().sort_stats("cumtime").print_stats(30)
         return res
+
     return wrapper

@@ -3,11 +3,13 @@ from typing import Iterable
 import numpy as np
 from ..registry import register_aggregator
 
+
 def _clean(values: np.ndarray, nan_policy: str = "omit") -> np.ndarray:
     v = np.asarray(values, dtype=float).ravel()
     if nan_policy == "omit":
         v = v[np.isfinite(v)]
     return v
+
 
 @register_aggregator("median")
 def aggregate(values: Iterable[float], *, nan_policy: str = "omit", **_: dict) -> float:

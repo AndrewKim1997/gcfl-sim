@@ -4,16 +4,21 @@ from gcfl.registry import seed_with, get_aggregator, get_signal, get_mechanism
 from gcfl import engine as _engine
 from gcfl.backends import reference, scale
 
+
 def _cfg():
     return {
         "meta": {"seed_root": 20250901},
-        "execution": {"backend": "reference", "parallel_workers": 0},  # set workers=0 to avoid thread scheduling nondeterminism
+        "execution": {
+            "backend": "reference",
+            "parallel_workers": 0,
+        },  # set workers=0 to avoid thread scheduling nondeterminism
         "engine": {"clients": 40, "rounds": 10, "repeats": 3},
         "signals": {"model": "affine", "a": 1.0, "b": 0.0, "noise_sigma": 0.5},
         "aggregator": {"kind": "trimmed", "trim_ratio": 0.1},
         "mechanism": {"policy": "u_orth_penalty", "alpha": 0.8, "pi": 0.2, "phi": 1.0},
         "logging": {"out_format": "csv"},
     }
+
 
 def test_reference_equals_scale_sequential():
     # Seed registry and resolve plugins

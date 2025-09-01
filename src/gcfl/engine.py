@@ -8,21 +8,26 @@ from .types import LogRow
 
 # ========= helpers =========
 
+
 def _clean(values: np.ndarray, nan_policy: str = "omit") -> np.ndarray:
     v = np.asarray(values, dtype=float).ravel()
     if nan_policy == "omit":
         v = v[np.isfinite(v)]
     return v
 
+
 # ========= built-in aggregators (engine-level) =========
+
 
 def agg_mean(values, *, nan_policy: str = "omit", **_: Any) -> float:
     v = _clean(np.asarray(values), nan_policy=nan_policy)
     return float("nan") if v.size == 0 else float(v.mean())
 
+
 def agg_median(values, *, nan_policy: str = "omit", **_: Any) -> float:
     v = _clean(np.asarray(values), nan_policy=nan_policy)
     return float("nan") if v.size == 0 else float(np.median(v))
+
 
 def agg_trimmed(values, *, trim_ratio: float = 0.10, nan_policy: str = "omit", **_: Any) -> float:
     v = _clean(np.asarray(values), nan_policy=nan_policy)
@@ -37,7 +42,8 @@ def agg_trimmed(values, *, trim_ratio: float = 0.10, nan_policy: str = "omit", *
     k = int(round(r * n))
     if 2 * k >= n:
         return float(v.mean())
-    return float(v[k: n - k].mean())
+    return float(v[k : n - k].mean())
+
 
 def _resample_weights(weights, n: int) -> np.ndarray:
     if weights is None:
@@ -53,6 +59,7 @@ def _resample_weights(weights, n: int) -> np.ndarray:
     s = out.sum()
     return (out / s) if s > 0 else np.ones(n, dtype=float) / max(n, 1)
 
+
 def agg_sorted_weighted(values, *, weights=None, nan_policy: str = "omit", **_: Any) -> float:
     v = _clean(np.asarray(values), nan_policy=nan_policy)
     if v.size == 0:
@@ -60,6 +67,7 @@ def agg_sorted_weighted(values, *, weights=None, nan_policy: str = "omit", **_: 
     v = np.sort(v)
     w = _resample_weights(weights, v.size)
     return float(np.dot(v, w))
+
 
 AGGREGATORS: Dict[str, Callable[..., float]] = {
     "mean": agg_mean,
@@ -70,9 +78,11 @@ AGGREGATORS: Dict[str, Callable[..., float]] = {
 
 # ========= built-in mechanism (engine-level) =========
 
+
 def _center(x: np.ndarray) -> np.ndarray:
     xx = np.asarray(x, dtype=float).ravel()
     return xx - xx.mean()
+
 
 def _orth_component(s: np.ndarray, u: np.ndarray) -> np.ndarray:
     su = _center(s)
@@ -82,6 +92,7 @@ def _orth_component(s: np.ndarray, u: np.ndarray) -> np.ndarray:
         return su
     proj = (np.dot(su, uu) / denom) * uu
     return su - proj
+
 
 def mech_u_orth_penalty(
     state: MutableMapping[str, Any],
@@ -116,6 +127,7 @@ def mech_u_orth_penalty(
         "DeltaU": float(delta_u),
     }
 
+
 MECHANISMS: Dict[str, Callable[..., Dict[str, float]]] = {
     "u_orth_penalty": mech_u_orth_penalty,
 }
@@ -127,6 +139,7 @@ SIGNALS: Dict[str, Callable[..., np.ndarray]] = {
 }
 
 # ========= reference loop used by tests (unchanged API) =========
+
 
 def run_experiment(cfg: Dict[str, Any]) -> pd.DataFrame:
     """
@@ -140,6 +153,7 @@ def run_experiment(cfg: Dict[str, Any]) -> pd.DataFrame:
     agg = AGGREGATORS[cfg["aggregator"]["kind"]]
     # signals/mechanisms can come from registry; tests seed registry via seed_with(...)
     from .registry import get_signal, get_mechanism, seed_with
+
     seed_with(AGGREGATORS, SIGNALS, MECHANISMS)
     sig = get_signal(cfg["signals"]["model"])
     mech = get_mechanism(cfg["mechanism"]["policy"])
@@ -157,17 +171,21 @@ def run_experiment(cfg: Dict[str, Any]) -> pd.DataFrame:
             m = float(agg(s, **cfg["aggregator"]))
             metrics = mech({}, u, s, m, g_round, **cfg["mechanism"])
 
-            rows.append({
-                "repeat": r, "round": t, "N": N,
-                "aggregator": cfg["aggregator"]["kind"],
-                "mechanism": cfg["mechanism"]["policy"],
-                "alpha": float(cfg["mechanism"].get("alpha", 0.0)),
-                "pi": float(cfg["mechanism"].get("pi", 0.0)),
-                "M": float(metrics["M"]),
-                "PoG": float(metrics["PoG"]),
-                "PoC": float(metrics["PoC"]),
-                "DeltaU": float(metrics["DeltaU"]),
-            })
+            rows.append(
+                {
+                    "repeat": r,
+                    "round": t,
+                    "N": N,
+                    "aggregator": cfg["aggregator"]["kind"],
+                    "mechanism": cfg["mechanism"]["policy"],
+                    "alpha": float(cfg["mechanism"].get("alpha", 0.0)),
+                    "pi": float(cfg["mechanism"].get("pi", 0.0)),
+                    "M": float(metrics["M"]),
+                    "PoG": float(metrics["PoG"]),
+                    "PoC": float(metrics["PoC"]),
+                    "DeltaU": float(metrics["DeltaU"]),
+                }
+            )
 
             # toy dynamics (same as reference backend)
             alpha = float(cfg["mechanism"].get("alpha", 0.0))

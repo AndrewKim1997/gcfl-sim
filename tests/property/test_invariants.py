@@ -3,8 +3,9 @@ import numpy as np
 from gcfl.registry import seed_with, get_aggregator, get_signal, get_mechanism
 from gcfl import engine as _engine
 from gcfl import aggregates as _agg_pkg  # noqa: F401
-from gcfl import signals as _sig_pkg     # noqa: F401
-from gcfl import mechanisms as _mech_pkg # noqa: F401
+from gcfl import signals as _sig_pkg  # noqa: F401
+from gcfl import mechanisms as _mech_pkg  # noqa: F401
+
 
 def test_aggregator_outputs_within_range():
     seed_with(_engine.AGGREGATORS, None, None)
@@ -15,6 +16,7 @@ def test_aggregator_outputs_within_range():
         out = agg(vals, trim_ratio=0.2, weights=[0, 1, 0]) if name != "median" else agg(vals)
         assert vmin - 1e-12 <= out <= vmax + 1e-12
 
+
 def test_signal_affine_zero_noise_is_exact():
     seed_with(None, _engine.SIGNALS, None)
     sig = get_signal("affine")
@@ -22,6 +24,7 @@ def test_signal_affine_zero_noise_is_exact():
     u = rng.normal(size=50)
     s = sig(u, rng, a=2.0, b=-1.0, noise_sigma=0.0)
     assert np.allclose(s, 2.0 * u - 1.0)
+
 
 def test_mechanism_pog_poc_exclusive():
     seed_with(None, None, _engine.MECHANISMS)

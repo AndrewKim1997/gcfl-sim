@@ -1,12 +1,14 @@
 """
 Reference backend — single-threaded, fully deterministic.
 """
+
 from __future__ import annotations
 from typing import Dict, List
 import pandas as pd
 
 from ..rng import RngBundle
 from ..types import LogRow
+
 
 def _run_one_repeat(
     r: int,

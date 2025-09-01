@@ -3,6 +3,7 @@ Ray backend — distributed repeats via Ray tasks.
 
 Requires: `pip install ray`. If Ray is not available, importing this module will fail.
 """
+
 from __future__ import annotations
 from typing import List
 import pandas as pd
@@ -16,15 +17,20 @@ from ..rng import RngBundle, substream
 from ..types import LogRow
 from .reference import _run_one_repeat  # reuse core logic
 
+
 @ray.remote
-def _repeat_task(r: int, cfg: dict, agg_bytes: bytes, sig_bytes: bytes, mech_bytes: bytes, seed_state: bytes) -> List[LogRow]:
+def _repeat_task(
+    r: int, cfg: dict, agg_bytes: bytes, sig_bytes: bytes, mech_bytes: bytes, seed_state: bytes
+) -> List[LogRow]:
     import pickle
+
     agg_fn = pickle.loads(agg_bytes)
     sig_fn = pickle.loads(sig_bytes)
     mech_fn = pickle.loads(mech_bytes)
     seedseq = pickle.loads(seed_state)
     rngs = RngBundle(seedseq)
     return _run_one_repeat(r, cfg, agg_fn, sig_fn, mech_fn, rngs)
+
 
 def run(cfg: dict, agg_fn, sig_fn, mech_fn, seedseq) -> pd.DataFrame:
     """
@@ -45,8 +51,7 @@ def run(cfg: dict, agg_fn, sig_fn, mech_fn, seedseq) -> pd.DataFrame:
 
     roots = [substream(seedseq, 0xA11CE, r) for r in range(R)]
     tasks = [
-        _repeat_task.remote(r, cfg, agg_b, sig_b, mech_b, pickle.dumps(roots[r]))
-        for r in range(R)
+        _repeat_task.remote(r, cfg, agg_b, sig_b, mech_b, pickle.dumps(roots[r])) for r in range(R)
     ]
     results = ray.get(tasks)
     rows: List[LogRow] = [row for part in results for row in part]

@@ -13,9 +13,9 @@ from .utils.logging import get_logger, log_provenance
 from .utils.profiling import Timer
 from .registry import seed_with, get_aggregator, get_signal, get_mechanism
 from . import aggregates as _agg_pkg  # noqa: F401  # trigger decorators
-from . import signals as _sig_pkg     # noqa: F401
-from . import mechanisms as _mech_pkg # noqa: F401
-from . import engine as _engine       # seed from engine builtins too
+from . import signals as _sig_pkg  # noqa: F401
+from . import mechanisms as _mech_pkg  # noqa: F401
+from . import engine as _engine  # seed from engine builtins too
 from .backends import get_backend, list_backends
 
 
@@ -77,8 +77,15 @@ def main(argv: list[str] | None = None) -> int:
         description="Run a single GCFL-sim experiment and write a table (Parquet/CSV).",
     )
     ap.add_argument("-c", "--config", required=True, help="Path to base YAML config")
-    ap.add_argument("-o", "--out", default="results/logs/run.parquet", help="Output table path (.parquet or .csv)")
-    ap.add_argument("--out-format", dest="out_format", choices=["parquet", "csv"], help="Override output format")
+    ap.add_argument(
+        "-o",
+        "--out",
+        default="results/logs/run.parquet",
+        help="Output table path (.parquet or .csv)",
+    )
+    ap.add_argument(
+        "--out-format", dest="out_format", choices=["parquet", "csv"], help="Override output format"
+    )
 
     # Execution / engine
     ap.add_argument("--backend", choices=list_backends(), help="Execution backend")
@@ -94,7 +101,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--noise-sigma", type=float, help="Signal noise sigma (affine)")
 
     # Aggregator & mechanism
-    ap.add_argument("--aggregator", help="Aggregator name (mean|median|trimmed|sorted_weighted or plugin)")
+    ap.add_argument(
+        "--aggregator", help="Aggregator name (mean|median|trimmed|sorted_weighted or plugin)"
+    )
     ap.add_argument("--trim-ratio", type=float, help="Trimmed ratio (for trimmed)")
     ap.add_argument("--policy", help="Mechanism policy name (e.g., u_orth_penalty)")
     ap.add_argument("--alpha", type=float)
@@ -103,7 +112,11 @@ def main(argv: list[str] | None = None) -> int:
 
     ap.add_argument("--seed", type=int, help="Seed root (deterministic)")
 
-    ap.add_argument("--list", action="store_true", help="List available backends/aggregators/signals/mechanisms and exit")
+    ap.add_argument(
+        "--list",
+        action="store_true",
+        help="List available backends/aggregators/signals/mechanisms and exit",
+    )
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args(argv)
 
@@ -114,6 +127,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.list:
         from .registry import list_aggregators, list_signals, list_mechanisms
+
         payload = {
             "backends": list_backends(),
             "aggregators": list_aggregators(),

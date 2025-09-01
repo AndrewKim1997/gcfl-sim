@@ -2,6 +2,7 @@ from __future__ import annotations
 import numpy as np
 from gcfl.rng import make_seedseq, RngBundle, substream
 
+
 def test_substream_determinism_and_distinctness():
     root1 = make_seedseq(123)
     root2 = make_seedseq(123)
@@ -13,6 +14,7 @@ def test_substream_determinism_and_distinctness():
     # different keys → different streams
     g3 = np.random.default_rng(substream(root1, 1, 2, 4))
     assert not np.allclose(g1.random(4), g3.random(4))
+
 
 def test_rngbundle_streams_are_stable():
     ss = make_seedseq(42)

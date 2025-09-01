@@ -4,8 +4,9 @@ from gcfl import engine
 from gcfl.registry import seed_with
 from gcfl import engine as _engine  # for builtins
 from gcfl import aggregates as _agg_pkg  # noqa: F401
-from gcfl import signals as _sig_pkg     # noqa: F401
-from gcfl import mechanisms as _mech_pkg # noqa: F401
+from gcfl import signals as _sig_pkg  # noqa: F401
+from gcfl import mechanisms as _mech_pkg  # noqa: F401
+
 
 def _cfg():
     return {
@@ -18,6 +19,7 @@ def _cfg():
         "logging": {"out_format": "csv"},
     }
 
+
 def test_run_experiment_shapes_and_columns():
     # engine.run_experiment uses its own built-ins; still seed the registry for completeness
     seed_with(_engine.AGGREGATORS, _engine.SIGNALS, _engine.MECHANISMS)
@@ -25,6 +27,7 @@ def test_run_experiment_shapes_and_columns():
     assert len(df) == _cfg()["engine"]["rounds"] * _cfg()["engine"]["repeats"]
     for col in ["repeat", "round", "N", "aggregator", "mechanism", "M", "PoG", "PoC", "DeltaU"]:
         assert col in df.columns
+
 
 def test_run_experiment_deterministic_same_seed():
     df1 = engine.run_experiment(_cfg())

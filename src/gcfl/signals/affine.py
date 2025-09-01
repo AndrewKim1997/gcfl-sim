@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Any, Tuple
 import numpy as np
 from ..registry import register_signal
+
 """
 Affine signal model with optional heteroskedastic noise and clipping.
 
@@ -19,6 +20,8 @@ Parameters (kwargs accepted through the registry/engine):
 Returns:
     np.ndarray of same shape as u
 """
+
+
 def _as_sigma(sigma: float | np.ndarray | None, u_shape: tuple[int, ...]) -> np.ndarray:
     if sigma is None:
         sigma = 0.5
@@ -26,6 +29,7 @@ def _as_sigma(sigma: float | np.ndarray | None, u_shape: tuple[int, ...]) -> np.
     if arr.ndim == 0:
         arr = np.broadcast_to(arr, u_shape)
     return arr
+
 
 @register_signal("affine")
 def model(

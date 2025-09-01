@@ -7,6 +7,7 @@ Importing this package registers built-in aggregators into the global registry:
 - trimmed
 - sorted_weighted
 """
+
 from __future__ import annotations
 
 # Import submodules to trigger @register_aggregator decorators

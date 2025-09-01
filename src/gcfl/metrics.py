@@ -1,10 +1,12 @@
 """
 Metric helpers: summaries with confidence intervals, frontiers on sign maps, etc.
 """
+
 from __future__ import annotations
 from typing import Sequence
 import numpy as np
 import pandas as pd
+
 
 def summarize_mean_ci(df: pd.DataFrame, value: str, by: Sequence[str]) -> pd.DataFrame:
     """
@@ -14,6 +16,7 @@ def summarize_mean_ci(df: pd.DataFrame, value: str, by: Sequence[str]) -> pd.Dat
     g["sem"] = g["std"] / np.sqrt(g["count"].clip(lower=1))
     g["ci95"] = 1.96 * g["sem"]
     return g
+
 
 def first_zero_crossing_frontier(
     alphas: np.ndarray, phis: np.ndarray, deltaU: np.ndarray
@@ -50,6 +53,7 @@ def first_zero_crossing_frontier(
                 phi_star[j] = float(x0 + t * (x1 - x0))
 
     return pd.DataFrame({"alpha": alphas, "phi_star": phi_star})
+
 
 def sign_map(M: np.ndarray) -> np.ndarray:
     """
