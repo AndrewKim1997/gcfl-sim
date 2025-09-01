@@ -4,13 +4,8 @@ import numpy as np
 
 
 def _root_int(seed_or_ss: int | None | np.random.SeedSequence) -> int:
-    """
-    Convert user-provided seed or SeedSequence to a deterministic 32-bit int root.
-    If None, use 0 (so tests remain deterministic).
-    """
     if isinstance(seed_or_ss, np.random.SeedSequence):
-        # entropy is an int; keep as-is but clamp to 32 bit for portability
-        return int(seed_or_ss.entropy) & 0xFFFFFFFF
+        return int(seed_or_ss.generate_state(1, dtype=np.uint32)[0])
     if seed_or_ss is None:
         return 0
     return int(seed_or_ss) & 0xFFFFFFFF
