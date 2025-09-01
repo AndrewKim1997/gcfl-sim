@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 from __future__ import annotations
-import argparse, itertools, json, os
+
+import argparse
+import itertools
+import json
+import os
 from copy import deepcopy
 from typing import Any, Dict, Iterable, List, Tuple
 
