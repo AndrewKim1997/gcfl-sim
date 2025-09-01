@@ -1,69 +1,108 @@
 ```
 gcfl-sim/
-├─ README.md                    # 상단에 gcfl 링크, 사용/확장/가속/분산 안내
+├─ README.md
 ├─ LICENSE
 ├─ CITATION.cff
 ├─ CHANGELOG.md
-├─ CONTRIBUTING.md              # 플러그인 규약/코드 스타일
-├─ .gitignore                   # Python+Numba+CMake+결과물+Ray/Dask 로그
+├─ CONTRIBUTING.md
+├─ .gitignore
 ├─ .dockerignore
-├─ pyproject.toml               # extras: "fast"(Numba/pybind11) 등
-├─ environment.yml              # conda 대안(옵션)
-├─ Makefile                     # build/run/test/benchmark 단축키(옵션)
+├─ pyproject.toml                 # extras: fast(numba/pybind11), dist(ray/dask)
+├─ environment.yml                # conda alternative
+├─ Makefile                       # build/run/test/bench shortcuts (optional)
+│
 ├─ src/
-│  └─ gcfl/                     # 패키지(임포트명은 gcfl)
+│  └─ gcfl/                       # import name: gcfl  (independent from gcfl repro repo)
 │     ├─ __init__.py
-│     ├─ rng.py                 # 결정적 서브스트림(seed→run/repeat/round/client)
-│     ├─ types.py               # dataclass/TypedDict 스키마
-│     ├─ params.py              # 설정 검증/변환
-│     ├─ aggregates.py          # mean/median/k-trim/정렬가중
-│     ├─ signals.py             # s_i 생성, 잡음 모형
-│     ├─ mechanisms.py          # 보상/제재, 임계/예산
-│     ├─ dynamics.py            # 라운드 상태 갱신
-│     ├─ metrics.py             # M, PoG, PoC, ΔU 등
-│     ├─ engine.py              # 메인 루프(signals→aggregate→mechanism→update→log)
-│     ├─ io.py                  # CSV/Parquet 로깅, 메타데이터 기록
-│     ├─ viz.py                 # 기본 시각화(옵션)
-│     ├─ run.py                 # 단일 실험(Reference/Scale 공통 CLI)
-│     └─ sweep.py               # 파라미터 스윕(단일/분산 백엔드)
-├─ accel/
-│  ├─ numba_kernels.py          # 선택: Numba JIT 커널
+│     ├─ types.py                 # dataclasses / TypedDict schemas
+│     ├─ rng.py                   # deterministic substreams (run/repeat/round/client)
+│     ├─ params.py                # config validation & merge
+│     ├─ engine.py                # round loop: signals→aggregate→mechanism→update→metrics
+│     ├─ dynamics.py              # state updates / maps / trajectories (if used)
+│     ├─ metrics.py               # M, PoG, PoC, DeltaU, etc.
+│     ├─ io.py                    # CSV/Parquet logging + metadata
+│     ├─ registry.py              # plugin discovery/registration
+│     ├─ backends/                # execution backends
+│     │  ├─ __init__.py
+│     │  ├─ reference.py          # single-thread, deterministic
+│     │  ├─ scale.py              # vectorized / multi-thread
+│     │  ├─ ray_backend.py        # optional distributed
+│     │  └─ dask_backend.py       # optional distributed
+│     ├─ aggregates/              # aggregator plugins
+│     │  ├─ __init__.py
+│     │  ├─ mean.py
+│     │  ├─ median.py
+│     │  ├─ trimmed.py
+│     │  └─ sorted_weighted.py
+│     ├─ mechanisms/              # mechanism plugins (penalty/reward rules)
+│     │  ├─ __init__.py
+│     │  └─ u_orth_penalty.py
+│     ├─ signals/                 # signal/noise models
+│     │  ├─ __init__.py
+│     │  └─ affine.py
+│     ├─ utils/
+│     │  ├─ profiling.py
+│     │  ├─ logging.py
+│     │  └─ version.py
+│     ├─ run.py                   # CLI: single experiment
+│     └─ sweep.py                 # CLI: parameter sweeps (local or distributed)
+│
+├─ accel/                         # optional acceleration
+│  ├─ numba_kernels.py            # JIT kernels (fallback-safe)
 │  └─ cpp/
 │     ├─ CMakeLists.txt
-│     ├─ fast_kernels.cpp       # 선택: 핵심 루프 가속
-│     └─ pybind_module.cpp      # pybind11 바인딩
-├─ configs/
-│  ├─ base.yaml                 # 엔진 기본값
-│  ├─ profiles/
-│  │  ├─ standard.yaml
-│  │  ├─ large.yaml
-│  │  └─ xl.yaml
+│     ├─ fast_kernels.cpp         # hot loops (sorting/trim/loops)
+│     └─ pybind_module.cpp        # pybind11 bindings
+│
+├─ configs/                       # reference configs (kept minimal)
+│  ├─ base.yaml
 │  └─ sweeps/
 │     ├─ alpha_pi.yaml
-│     └─ stress_boundary.yaml
+│     └─ boundary.yaml
+│
 ├─ scripts/
-│  ├─ quickstart.sh             # 바로 실행 예시
-│  ├─ make_figs.py              # 데모용 플롯
-│  ├─ benchmark.py              # 성능/스케일 벤치
-│  └─ profile.sh                # cProfile/py-spy 등(옵션)
+│  ├─ quickstart.sh               # hello world run/sweep
+│  ├─ benchmark.py                # perf/scale bench
+│  ├─ profile.sh                  # cProfile/py-spy helpers
+│  └─ make_figs.py                # demo plotting from logs (optional)
+│
+├─ examples/
+│  ├─ python_api.py               # minimal API usage
+│  └─ plugins/                    # how-to write a plugin
+│     ├─ my_aggregator.py
+│     └─ README.md
+│
+├─ tests/
+│  ├─ unit/
+│  │  ├─ test_aggregates.py
+│  │  ├─ test_mechanisms.py
+│  │  ├─ test_engine.py
+│  │  └─ test_rng.py
+│  ├─ property/
+│  │  └─ test_invariants.py       # invariants / boundary properties
+│  └─ perf/
+│     └─ test_ref_vs_scale.py     # tolerance between backends
+│
 ├─ results/
-│  ├─ logs/.gitkeep
+│  ├─ logs/.gitkeep               # not committed; kept for local runs
 │  ├─ figures/.gitkeep
 │  └─ cache/.gitkeep
+│
 ├─ docker/
-│  ├─ Dockerfile                # CPU 기본
-│  ├─ Dockerfile.cuda           # 선택: CUDA
-│  └─ docker-compose.yml        # 선택: Ray/Dask 분산
-├─ tests/
-│  ├─ test_aggregates.py        # 동률/절단 규칙 불변성
-│  ├─ test_engine_determinism.py# 결정성/시드 재현
-│  ├─ test_metrics.py           # 지표 검증
-│  ├─ test_scale_vs_ref.py      # Scale↔Reference 오차 한계
-│  └─ property/
-│     └─ test_properties.py     # 속성 기반/경계 조건
+│  ├─ Dockerfile                  # CPU base image
+│  ├─ Dockerfile.cuda             # optional CUDA image
+│  └─ docker-compose.yml          # optional Ray/Dask cluster
+│
+├─ docs/                          # lightweight developer/user docs (optional)
+│  ├─ API.md
+│  ├─ CONFIGS.md
+│  ├─ PLUGINS.md
+│  ├─ DISTRIBUTED.md
+│  └─ REPRODUCIBILITY.md
+│
 └─ .github/
    └─ workflows/
-      ├─ ci.yml                 # lint+unit+property+간단 스윕
-      ├─ docker.yml             # 이미지 빌드/GHCR 푸시(옵션)
-      └─ build_wheels.yml       # 배포용 휠 빌드(옵션)
+      ├─ ci.yml                   # lint + unit/property + small sweep
+      ├─ docker.yml               # build & push images (optional)
+      └─ build_wheels.yml         # wheel build (optional)
 ```
