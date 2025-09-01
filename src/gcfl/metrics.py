@@ -2,7 +2,7 @@
 Metric helpers: summaries with confidence intervals, frontiers on sign maps, etc.
 """
 from __future__ import annotations
-from typing import Iterable, Sequence, Tuple
+from typing import Sequence
 import numpy as np
 import pandas as pd
 
