@@ -8,7 +8,6 @@ Notes:
 from __future__ import annotations
 from typing import List
 import concurrent.futures as _cf
-import numpy as np
 import pandas as pd
 
 from ..rng import RngBundle
