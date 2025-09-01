@@ -26,13 +26,10 @@
 <h1 align="center">GCFL-Simulator — A Toolkit for Gaming &amp; Cooperation in FL</h1>
 
 <p align="center">
-  <strong>Related resources:</strong>
   <a href="https://github.com/AndrewKim1997/gcfl">Reproducibility repository (gcfl)</a>
   &nbsp;·&nbsp;
   <a href="https://arxiv.org/abs/XXXX.XXXXX">arXiv preprint</a>
 </p>
-
-# GCFL-SimulatorA Toolkit for Gaming & Cooperation in Federated Learning
 
 > An **open-source simulator** inspired by the paper *“Gaming and Cooperation in Federated Learning: What Can Happen and How to Monitor It”* — built as an **independent** project so researchers and engineers can **experiment, extend, and scale** beyond the manuscript.
 
