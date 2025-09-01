@@ -1,7 +1,7 @@
 <p align="center">
-  <a href="https://www.sciencedirect.com/journal/applied-soft-computing">
-    <img alt="Journal: Applied Soft Computing"
-         src="https://img.shields.io/badge/Applied%20Soft%20Computing-1e3787?style=flat-square&logo=elsevier&logoColor=white&labelColor=1e3787">
+  <a href="https://arxiv.org/abs/XXXX.XXXXX">
+    <img alt="arXiv"
+         src="https://img.shields.io/badge/arXiv-XXXX.XXXXX-B31B1B?style=flat-square&logo=arXiv&logoColor=white&labelColor=B31B1B">
   </a>
   <a href="https://github.com/AndrewKim1997/federated-regressive-learning/actions/workflows/ci.yml">
     <img alt="CI"
@@ -23,7 +23,7 @@
   </a>
 </p>
 
-<h1 align="center">GCFL-Simulator — A Toolkit for Gaming &amp; Cooperation in Federated Learning</h1>
+<h1 align="center">GCFL-Simulator — A Toolkit for Gaming &amp; Cooperation in FL</h1>
 
 <p align="center">
   <strong>Related resources:</strong>
