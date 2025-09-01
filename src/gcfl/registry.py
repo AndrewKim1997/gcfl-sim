@@ -1,109 +1,114 @@
-"""
-Lightweight plugin registry with decorator-based registration.
-
-Usage:
-    from gcfl.registry import register_aggregator, get_aggregator
-    @register_aggregator("my_mean")
-    def my_mean(values: np.ndarray, **kw) -> float: ...
-
-    fn = get_aggregator("my_mean")
-"""
-
 from __future__ import annotations
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional
 
 # Internal registries
-_AGG: Dict[str, Callable] = {}
-_SIG: Dict[str, Callable] = {}
-_MECH: Dict[str, Callable] = {}
+_AGG: Dict[str, Callable[..., float]] = {}
+_SIG: Dict[str, Callable[..., object]] = {}
+_MECH: Dict[str, Callable[..., dict]] = {}
 
-# ----- decorators -----
-
+# ----- registration decorators -----
 
 def register_aggregator(name: str):
-    def _decorator(fn: Callable):
-        key = str(name).strip()
-        if not key:
-            raise ValueError("Aggregator name must be non-empty")
-        _AGG[key] = fn
+    def _wrap(fn: Callable[..., float]):
+        _AGG[str(name)] = fn
         return fn
-
-    return _decorator
-
+    return _wrap
 
 def register_signal(name: str):
-    def _decorator(fn: Callable):
-        key = str(name).strip()
-        if not key:
-            raise ValueError("Signal name must be non-empty")
-        _SIG[key] = fn
+    def _wrap(fn: Callable[..., object]):
+        _SIG[str(name)] = fn
         return fn
-
-    return _decorator
-
+    return _wrap
 
 def register_mechanism(name: str):
-    def _decorator(fn: Callable):
-        key = str(name).strip()
-        if not key:
-            raise ValueError("Mechanism name must be non-empty")
-        _MECH[key] = fn
+    def _wrap(fn: Callable[..., dict]):
+        _MECH[str(name)] = fn
         return fn
+    return _wrap
 
-    return _decorator
-
-
-# ----- getters & listings -----
-
-
-def get_aggregator(name: str) -> Callable:
-    try:
-        return _AGG[name]
-    except KeyError as e:
-        raise KeyError(f"Unknown aggregator: {name}. Available: {sorted(_AGG)}") from e
-
-
-def get_signal(name: str) -> Callable:
-    try:
-        return _SIG[name]
-    except KeyError as e:
-        raise KeyError(f"Unknown signal: {name}. Available: {sorted(_SIG)}") from e
-
-
-def get_mechanism(name: str) -> Callable:
-    try:
-        return _MECH[name]
-    except KeyError as e:
-        raise KeyError(f"Unknown mechanism: {name}. Available: {sorted(_MECH)}") from e
-
-
-def list_aggregators() -> list[str]:
-    return sorted(_AGG)
-
-
-def list_signals() -> list[str]:
-    return sorted(_SIG)
-
-
-def list_mechanisms() -> list[str]:
-    return sorted(_MECH)
-
-
-# ----- optional: seed with builtins (call this from engine/__init__ if desired) -----
-
+# ----- helpers -----
 
 def seed_with(
-    builtin_agg: Dict[str, Callable] | None = None,
-    builtin_sig: Dict[str, Callable] | None = None,
-    builtin_mech: Dict[str, Callable] | None = None,
+    aggs: Optional[Dict[str, Callable[..., float]]] = None,
+    sigs: Optional[Dict[str, Callable[..., object]]] = None,
+    mechs: Optional[Dict[str, Callable[..., dict]]] = None,
 ) -> None:
     """
-    Seed the registry with built-in plugin dictionaries.
-    Safe to call multiple times; later calls overwrite on key collision.
+    Prime registries with provided dictionaries, but:
+      - do not override existing entries,
+      - ignore entries where the value is None (placeholder names).
     """
-    if builtin_agg:
-        _AGG.update(builtin_agg)
-    if builtin_sig:
-        _SIG.update(builtin_sig)
-    if builtin_mech:
-        _MECH.update(builtin_mech)
+    if aggs:
+        for k, v in aggs.items():
+            if v is None:
+                continue
+            _AGG.setdefault(k, v)
+    if sigs:
+        for k, v in sigs.items():
+            if v is None:
+                continue
+            _SIG.setdefault(k, v)
+    if mechs:
+        for k, v in mechs.items():
+            if v is None:
+                continue
+            _MECH.setdefault(k, v)
+
+def _lazy_import_signals() -> None:
+    # Import inside function to avoid circulars at module import time
+    try:
+        import gcfl.signals as _  # noqa: F401
+    except Exception:
+        pass  # keep silent; caller will error if unresolved
+
+def _lazy_import_aggregates() -> None:
+    try:
+        import gcfl.aggregates as _  # noqa: F401
+    except Exception:
+        pass
+
+def _lazy_import_mechanisms() -> None:
+    try:
+        import gcfl.mechanisms as _  # noqa: F401
+    except Exception:
+        pass
+
+# ----- getters (with lazy import fallback) -----
+
+def get_aggregator(name: str) -> Callable[..., float]:
+    fn = _AGG.get(name)
+    if fn is None:
+        _lazy_import_aggregates()
+        fn = _AGG.get(name)
+    if fn is None:
+        raise KeyError(f"unknown aggregator: {name!r}")
+    return fn
+
+def get_signal(name: str):
+    fn = _SIG.get(name)
+    if fn is None:
+        _lazy_import_signals()
+        fn = _SIG.get(name)
+    if fn is None:
+        raise KeyError(f"unknown signal: {name!r}")
+    return fn
+
+def get_mechanism(name: str) -> Callable[..., dict]:
+    fn = _MECH.get(name)
+    if fn is None:
+        _lazy_import_mechanisms()
+        fn = _MECH.get(name)
+    if fn is None:
+        raise KeyError(f"unknown mechanism: {name!r}")
+    return fn
+
+# ----- listings -----
+
+def list_aggregators() -> list[str]:
+    return sorted(_AGG.keys())
+
+def list_signals() -> list[str]:
+    return sorted(_SIG.keys())
+
+def list_mechanisms() -> list[str]:
+    return sorted(_MECH.keys())
