@@ -4,7 +4,6 @@ Optionally include a short git description for local worktrees.
 """
 from __future__ import annotations
 from typing import Any, Dict
-import os
 import subprocess
 
 try:  # Python 3.8+
