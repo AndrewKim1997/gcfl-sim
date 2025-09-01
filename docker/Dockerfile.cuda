@@ -1,0 +1,35 @@
+FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 \
+    GCFL_EXTRAS="dist"
+
+# OS & Python
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-pip python3-venv python3-dev \
+    build-essential git curl ca-certificates cmake ninja-build \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
+ && python -m pip install -U pip wheel
+
+WORKDIR /workspace
+
+# Copy project
+COPY pyproject.toml README.md ./ 
+COPY src ./src
+COPY configs ./configs
+COPY scripts ./scripts
+COPY examples ./examples
+COPY accel ./accel
+
+RUN mkdir -p results/logs results/figures results/cache
+
+# Install with extras
+RUN if [ -n "$GCFL_EXTRAS" ]; then \
+        python -m pip install -e ".[${GCFL_EXTRAS}]"; \
+    else \
+        python -m pip install -e .; \
+    fi
+
+CMD ["python", "-m", "gcfl.run", "-c", "configs/base.yaml", "-o", "results/logs/run.parquet"]
