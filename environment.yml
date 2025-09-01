@@ -1,0 +1,18 @@
+name: gcfl-sim
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - numpy>=1.24
+  - pandas>=2.0
+  - pyyaml>=6.0
+  - pyarrow>=14.0
+  - pip
+  - pip:
+      # Install in editable mode with optional extras as needed:
+      #   - just core:      -e .
+      #   - with fast:      -e .[fast]
+      #   - with dist:      -e .[dist]
+      #   - with both+dev:  -e .[fast,dist,dev]
+      - -e .[dev]
