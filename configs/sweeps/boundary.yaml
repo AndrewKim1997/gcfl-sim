@@ -1,0 +1,17 @@
+# Sweep (α, φ) for ΔU sign map and φ*(α) frontier extraction.
+base: ../base.yaml
+
+# Optional runtime overrides for the sweep
+engine:
+  repeats: 1
+  rounds: 30
+
+sweep:
+  grid:
+    mechanism.alpha: {start: 0.0, stop: 8.0, num: 241}
+    mechanism.phi:   {start: 0.0, stop: 6.0, num: 241}
+
+# Informational only; pass -o to gcfl-sweep to set the actual output.
+output:
+  path: results/logs/boundary.parquet
+  format: parquet
