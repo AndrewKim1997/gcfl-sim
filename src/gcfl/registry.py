@@ -9,7 +9,7 @@ Usage:
     fn = get_aggregator("my_mean")
 """
 from __future__ import annotations
-from typing import Callable, Dict, Iterable
+from typing import Callable, Dict
 
 # Internal registries
 _AGG: Dict[str, Callable] = {}
