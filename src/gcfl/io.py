@@ -3,7 +3,12 @@ I/O utilities: safe writing to CSV/Parquet and lightweight provenance capture.
 """
 from __future__ import annotations
 from typing import Any, Dict
-import json, os, platform, socket, subprocess, shutil
+import json
+import os
+import platform
+import socket
+import subprocess
+import shutil
 import pandas as pd
 
 def write_table(df: pd.DataFrame, out_path: str, fmt: str = "parquet") -> str:
