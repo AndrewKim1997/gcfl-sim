@@ -1,0 +1,74 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gcfl-sim"
+version = "0.1.0"
+description = "Lightweight, extensible simulator for gaming & cooperation in federated learning."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Your Name"}]
+keywords = ["federated-learning", "simulation", "game-theory", "mechanism-design"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+
+dependencies = [
+  "numpy>=1.24",
+  "pandas>=2.0",
+  "pyyaml>=6.0",
+  "pyarrow>=14.0",
+  "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+# JIT/Native acceleration; all optional and safe to skip
+fast = [
+  "numba>=0.59",
+  "pybind11>=2.12",
+  "cmake>=3.26",
+  "ninja>=1.11",
+]
+# Distributed sweep/runs (install one or both as you prefer)
+dist = [
+  "ray[default]>=2.8",
+  "dask>=2024.4.0",
+  "distributed>=2024.4.0",
+]
+dev = [
+  "pytest>=8.0",
+  "pytest-xdist>=3.5",
+  "ruff>=0.5",
+  "black>=24.3",
+  "mypy>=1.10",
+  "types-PyYAML",
+]
+
+[project.scripts]
+gcfl-run = "gcfl.run:main"
+gcfl-sweep = "gcfl.sweep:main"
+
+[project.urls]
+Repository = "https://github.com/<org>/gcfl-sim"
+Issues = "https://github.com/<org>/gcfl-sim/issues"
+Documentation = "https://github.com/<org>/gcfl-sim#readme"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gcfl"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
