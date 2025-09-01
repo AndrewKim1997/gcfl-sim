@@ -1,4 +1,7 @@
 from __future__ import annotations
+from typing import Dict, MutableMapping, Any
+import numpy as np
+from ..registry import register_mechanism
 """
 u_orth_penalty: penalize the component of the monitoring signal s that is orthogonal to u.
 
@@ -22,10 +25,6 @@ Parameters (from cfg["mechanism"]):
     benign_threshold: float
     neutralize_when_deltaU_ge_0: bool
 """
-from typing import Dict, MutableMapping, Any
-import numpy as np
-from ..registry import register_mechanism
-
 def _center(x: np.ndarray) -> np.ndarray:
     x = np.asarray(x, dtype=float).ravel()
     return x - x.mean()
