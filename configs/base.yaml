@@ -1,0 +1,38 @@
+meta:
+  experiment: gcfl_sim_reference
+  seed_root: 20250901
+
+execution:
+  backend: reference         # reference | scale | ray | dask
+  parallel_workers: 0        # used by 'scale' backend
+  log_every: 1
+
+engine:
+  clients: 200               # N
+  rounds: 60                 # T
+  repeats: 5                 # R
+
+signals:
+  model: affine
+  a: 1.0
+  b: 0.0
+  noise_sigma: 0.5           # alias: 'sigma'
+  clip: null                 # e.g., [null, 5.0]
+
+aggregator:
+  kind: mean                 # mean | median | trimmed | sorted_weighted
+  trim_ratio: 0.10           # for 'trimmed'; ignored otherwise
+  # weights: []              # for 'sorted_weighted'; optional
+
+mechanism:
+  policy: u_orth_penalty
+  alpha: 1.2                 # damping/intensity used in toy dynamics
+  pi: 0.20                   # information mixing ratio in [0,1]
+  phi: 1.0                   # penalty strength
+  eta: 1.0                   # scaling for the u-component in mixing
+  benign_threshold: 0.10
+  neutralize_when_deltaU_ge_0: true
+
+logging:
+  out_format: parquet        # parquet | csv
+  float_precision: 6
