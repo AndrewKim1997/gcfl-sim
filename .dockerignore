@@ -1,0 +1,45 @@
+# Keep Docker build context small
+.git
+.github
+.docker
+.dockerignore
+.gitignore
+
+# Virtual envs & caches
+.venv/
+venv/
+__pycache__/
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Local results & big artifacts (not needed in images)
+results/
+*.parquet
+*.feather
+*.arrow
+*.h5
+*.npz
+*.npy
+*.csv
+*.tsv
+*.jsonl
+*.pickle
+*.pkl
+*.gz
+*.zip
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
