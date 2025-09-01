@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Protocol, Mapping, MutableMapping, TypedDict, Any, Optional
+from typing import Protocol, Mapping, MutableMapping, TypedDict, Any
 import numpy as np
 
 # ---------- Plugin protocols (interfaces) ----------
