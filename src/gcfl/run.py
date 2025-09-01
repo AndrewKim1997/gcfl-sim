@@ -20,36 +20,53 @@ from .backends import get_backend, list_backends
 
 
 def _apply_overrides(cfg: Dict[str, Any], args: argparse.Namespace) -> Dict[str, Any]:
-    """Apply CLI overrides to a loaded config (in-place, but also return)."""
     c = cfg
+
     # Execution / logging
-    if args.backend:          c["execution"]["backend"] = args.backend
-    if args.workers is not None: c["execution"]["parallel_workers"] = int(args.workers)
-    if args.out_format:       c["logging"]["out_format"] = args.out_format
+    if args.backend:
+        c["execution"]["backend"] = args.backend
+    if args.workers is not None:
+        c["execution"]["parallel_workers"] = int(args.workers)
+    if args.out_format:
+        c["logging"]["out_format"] = args.out_format
 
     # Engine
-    if args.clients is not None:  c["engine"]["clients"] = int(args.clients)
-    if args.rounds is not None:   c["engine"]["rounds"] = int(args.rounds)
-    if args.repeats is not None:  c["engine"]["repeats"] = int(args.repeats)
+    if args.clients is not None:
+        c["engine"]["clients"] = int(args.clients)
+    if args.rounds is not None:
+        c["engine"]["rounds"] = int(args.rounds)
+    if args.repeats is not None:
+        c["engine"]["repeats"] = int(args.repeats)
 
     # Signals
-    if args.signal_model:     c["signals"]["model"] = args.signal_model
-    if args.a is not None:    c["signals"]["a"] = float(args.a)
-    if args.b is not None:    c["signals"]["b"] = float(args.b)
-    if args.noise_sigma is not None: c["signals"]["noise_sigma"] = float(args.noise_sigma)
+    if args.signal_model:
+        c["signals"]["model"] = args.signal_model
+    if args.a is not None:
+        c["signals"]["a"] = float(args.a)
+    if args.b is not None:
+        c["signals"]["b"] = float(args.b)
+    if args.noise_sigma is not None:
+        c["signals"]["noise_sigma"] = float(args.noise_sigma)
 
     # Aggregator
-    if args.aggregator:       c["aggregator"]["kind"] = args.aggregator
-    if args.trim_ratio is not None: c["aggregator"]["trim_ratio"] = float(args.trim_ratio)
+    if args.aggregator:
+        c["aggregator"]["kind"] = args.aggregator
+    if args.trim_ratio is not None:
+        c["aggregator"]["trim_ratio"] = float(args.trim_ratio)
 
     # Mechanism
-    if args.policy:           c["mechanism"]["policy"] = args.policy
-    if args.alpha is not None:c["mechanism"]["alpha"] = float(args.alpha)
-    if args.pi is not None:   c["mechanism"]["pi"] = float(args.pi)
-    if args.phi is not None:  c["mechanism"]["phi"] = float(args.phi)
+    if args.policy:
+        c["mechanism"]["policy"] = args.policy
+    if args.alpha is not None:
+        c["mechanism"]["alpha"] = float(args.alpha)
+    if args.pi is not None:
+        c["mechanism"]["pi"] = float(args.pi)
+    if args.phi is not None:
+        c["mechanism"]["phi"] = float(args.phi)
 
     # Seed
-    if args.seed is not None: c["meta"]["seed_root"] = int(args.seed)
+    if args.seed is not None:
+        c["meta"]["seed_root"] = int(args.seed)
 
     return c
 
