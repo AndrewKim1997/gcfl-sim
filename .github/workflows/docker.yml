@@ -1,0 +1,62 @@
+name: Docker images
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - { dockerfile: docker/Dockerfile, tag: "cpu", extras: "" }
+          - { dockerfile: docker/Dockerfile.cuda, tag: "cuda", extras: "dist" }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha,prefix=${{ matrix.variant.tag }}-,format=short
+            type=raw,value=${{ matrix.variant.tag }}
+
+      - name: Build & push (${{ matrix.variant.tag }})
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.variant.dockerfile }}
+          push: true
+          build-args: |
+            EXTRAS=${{ matrix.variant.extras }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Show resulting tags
+        run: echo "${{ steps.meta.outputs.tags }}"
