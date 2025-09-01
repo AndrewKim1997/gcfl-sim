@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install (dev)
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e .[dev]
+      - name: Ruff check
+        run: ruff check src tests
+      - name: Ruff format (diff only)
+        run: ruff format --check src tests
+
+  tests:
+    name: Tests (pytest) py${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: 'pip'
+      - name: Install (dev)
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e .[dev]
+      - name: Pytest
+        run: pytest -q
+
+  smoke:
+    name: Repro smoke & artifacts
+    needs: [lint, tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install (dev)
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e .[dev]
+      - name: Single run (tiny)
+        run: |
+          python -m gcfl.run -c configs/base.yaml \
+            --clients 80 --rounds 20 --repeats 1 \
+            --backend reference \
+            -o results/logs/ci_run.parquet
+      - name: Tiny alpha–pi sweep (9 pts)
+        run: |
+          python -m gcfl.sweep -c configs/base.yaml \
+            --grid "mechanism.alpha=0.0,1.0,2.0" \
+            --grid "mechanism.pi=0.0,0.5,1.0" \
+            --experiments-workers 0 \
+            --backend reference \
+            -o results/logs/ci_alpha_pi.parquet
+      - name: Demo figures (optional)
+        run: |
+          python scripts/make_figs.py --glob "results/logs/*.parquet" --outdir results/figures || true
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gcfl-sim-ci-artifacts
+          path: |
+            results/logs/**
+            results/figures/**
+          if-no-files-found: warn
