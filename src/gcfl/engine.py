@@ -1,163 +1,176 @@
 from __future__ import annotations
-from typing import Dict, List, Tuple
+from typing import Any, Dict, MutableMapping, Callable
 import numpy as np
 import pandas as pd
 
-from .types import EngineConfig, LogRow, Aggregator, SignalModel, Mechanism
-from .rng import make_seedseq, RngBundle
-from .params import load_config
+from .rng import RngBundle, make_seedseq
+from .types import LogRow
 
-# ---------------- Built-in minimal plugins ----------------
+# ========= helpers =========
 
-def agg_mean(values: np.ndarray, **_: dict) -> float:
-    return float(np.mean(values))
+def _clean(values: np.ndarray, nan_policy: str = "omit") -> np.ndarray:
+    v = np.asarray(values, dtype=float).ravel()
+    if nan_policy == "omit":
+        v = v[np.isfinite(v)]
+    return v
 
-def agg_median(values: np.ndarray, **_: dict) -> float:
-    return float(np.median(values))
+# ========= built-in aggregators (engine-level) =========
 
-def agg_trimmed(values: np.ndarray, trim_ratio: float = 0.10, **_: dict) -> float:
-    v = np.sort(values)
-    n = len(v)
-    k = int(max(0, min(n // 2, round(trim_ratio * n))))
+def agg_mean(values, *, nan_policy: str = "omit", **_: Any) -> float:
+    v = _clean(np.asarray(values), nan_policy=nan_policy)
+    return float("nan") if v.size == 0 else float(v.mean())
+
+def agg_median(values, *, nan_policy: str = "omit", **_: Any) -> float:
+    v = _clean(np.asarray(values), nan_policy=nan_policy)
+    return float("nan") if v.size == 0 else float(np.median(v))
+
+def agg_trimmed(values, *, trim_ratio: float = 0.10, nan_policy: str = "omit", **_: Any) -> float:
+    v = _clean(np.asarray(values), nan_policy=nan_policy)
+    if v.size == 0:
+        return float("nan")
+    v = np.sort(v)
+    n = v.size
+    r = float(trim_ratio)
+    if not np.isfinite(r):
+        r = 0.0
+    r = min(max(r, 0.0), 0.5)
+    k = int(round(r * n))
     if 2 * k >= n:
         return float(v.mean())
-    return float(v[k : n - k].mean())
+    return float(v[k: n - k].mean())
 
-def agg_sorted_weighted(values: np.ndarray, weights: List[float] | Tuple[float, ...] = (), **_: dict) -> float:
-    v = np.sort(values)
-    if not weights:
-        return float(v.mean())
-    w = np.asarray(weights, dtype=float)
-    if len(w) != len(v):
-        # interpolate weights to length n
-        w = np.interp(np.linspace(0, 1, len(v)), np.linspace(0, 1, len(weights)), w)
-    w = w / w.sum()
+def _resample_weights(weights, n: int) -> np.ndarray:
+    if weights is None:
+        return np.ones(n, dtype=float) / max(n, 1)
+    w = np.asarray(weights, dtype=float).ravel()
+    w = np.clip(w, 0.0, np.inf)
+    if w.size == n:
+        out = w
+    else:
+        x_src = np.linspace(0.0, 1.0, num=w.size)
+        x_tgt = np.linspace(0.0, 1.0, num=n)
+        out = np.interp(x_tgt, x_src, w)
+    s = out.sum()
+    return (out / s) if s > 0 else np.ones(n, dtype=float) / max(n, 1)
+
+def agg_sorted_weighted(values, *, weights=None, nan_policy: str = "omit", **_: Any) -> float:
+    v = _clean(np.asarray(values), nan_policy=nan_policy)
+    if v.size == 0:
+        return float("nan")
+    v = np.sort(v)
+    w = _resample_weights(weights, v.size)
     return float(np.dot(v, w))
 
-AGGREGATORS: Dict[str, Aggregator] = {
+AGGREGATORS: Dict[str, Callable[..., float]] = {
     "mean": agg_mean,
     "median": agg_median,
     "trimmed": agg_trimmed,
     "sorted_weighted": agg_sorted_weighted,
 }
 
-def signal_affine(u: np.ndarray, rng: np.random.Generator, a: float = 1.0, b: float = 0.0, noise_sigma: float = 0.5, **kwargs) -> np.ndarray:
-    noise = rng.normal(loc=0.0, scale=noise_sigma, size=u.shape)
-    return a * u + b + noise
+# ========= built-in mechanism (engine-level) =========
 
-SIGNALS: Dict[str, SignalModel] = {
-    "affine": signal_affine,
-}
+def _center(x: np.ndarray) -> np.ndarray:
+    xx = np.asarray(x, dtype=float).ravel()
+    return xx - xx.mean()
 
-def mech_u_orth_penalty(state, u: np.ndarray, s: np.ndarray, m: float, rng: np.random.Generator, alpha: float = 0.5, pi: float = 0.2, phi: float = 1.0, **kwargs):
-    """
-    Toy mechanism:
-    - Monitoring signal is the aggregator output m.
-    - 'Penalty' proportional to average deviation |s - u|.
-    - Report a few generic metrics often seen in the paper nomenclature:
-        M     := m
-        PoG   := max(0, m)           (placeholder "gain"-like proxy)
-        PoC   := max(0, -m)          (placeholder "cost"-like proxy)
-        DeltaU:= -phi * mean(|s - u|)
-    You should replace this with your actual mechanism when ready.
-    """
-    deviation = np.abs(s - u).mean()
-    delta_u = -phi * deviation
-    metrics = {
+def _orth_component(s: np.ndarray, u: np.ndarray) -> np.ndarray:
+    su = _center(s)
+    uu = _center(u)
+    denom = float(np.dot(uu, uu))
+    if denom <= 0.0:
+        return su
+    proj = (np.dot(su, uu) / denom) * uu
+    return su - proj
+
+def mech_u_orth_penalty(
+    state: MutableMapping[str, Any],
+    u: np.ndarray,
+    s: np.ndarray,
+    m: float,
+    rng: np.random.Generator,
+    *,
+    alpha: float = 0.5,
+    pi: float = 0.2,
+    eta: float = 1.0,
+    phi: float = 1.0,
+    benign_threshold: float = 0.10,
+    neutralize_when_deltaU_ge_0: bool = True,
+    **kwargs: Any,
+) -> Dict[str, float]:
+    pi = float(np.clip(pi, 0.0, 1.0))
+    s_eff = (1.0 - pi) * np.asarray(s, dtype=float) + pi * float(eta) * np.asarray(u, dtype=float)
+
+    orth = _orth_component(s_eff, u)
+    finite = np.isfinite(orth)
+    orth_mag = float(np.mean(np.abs(orth[finite]))) if finite.any() else 0.0
+
+    delta_u = -float(phi) * orth_mag
+    if neutralize_when_deltaU_ge_0 and (m >= 0.0) and (orth_mag <= float(benign_threshold)):
+        delta_u = 0.0
+
+    return {
         "M": float(m),
         "PoG": float(max(0.0, m)),
         "PoC": float(max(0.0, -m)),
         "DeltaU": float(delta_u),
     }
-    # This toy mechanism does not mutate state; in real models you might update it here.
-    return metrics
 
-MECHANISMS: Dict[str, Mechanism] = {
+MECHANISMS: Dict[str, Callable[..., Dict[str, float]]] = {
     "u_orth_penalty": mech_u_orth_penalty,
 }
 
-# ---------------- Engine ----------------
+# ========= signals registry seed (engine exposes names; impl은 패키지에서 로드) =========
+# 신호는 빌트인 이름만 노출하고, 실제 구현은 gcfl.signals.* 에서 등록/해결합니다.
+SIGNALS: Dict[str, Callable[..., np.ndarray]] = {
+    "affine": None,  # registry에서 실제 함수를 resolve
+}
 
-def _select_plugins(cfg: EngineConfig) -> tuple[Aggregator, SignalModel, Mechanism]:
-    agg_kind = cfg["aggregator"]["kind"]
-    if agg_kind not in AGGREGATORS:
-        raise KeyError(f"Unknown aggregator: {agg_kind}")
-    sig_model = cfg["signals"]["model"]
-    if sig_model not in SIGNALS:
-        raise KeyError(f"Unknown signal model: {sig_model}")
-    mech_policy = cfg["mechanism"]["policy"]
-    if mech_policy not in MECHANISMS:
-        raise KeyError(f"Unknown mechanism policy: {mech_policy}")
-    return AGGREGATORS[agg_kind], SIGNALS[sig_model], MECHANISMS[mech_policy]
+# ========= reference loop used by tests (unchanged API) =========
 
-def _write(df: pd.DataFrame, out: str, fmt: str) -> None:
-    if fmt == "parquet":
-        try:
-            import pyarrow  # noqa: F401
-            df.to_parquet(out, index=False)
-        except Exception:
-            # graceful fallback to CSV if parquet writer not available
-            csv_out = out.rsplit(".", 1)[0] + ".csv"
-            df.to_csv(csv_out, index=False)
-    else:
-        df.to_csv(out, index=False)
-
-def run_experiment(config: EngineConfig | dict, seed: int | None = None, out: str | None = None) -> pd.DataFrame:
+def run_experiment(cfg: Dict[str, Any]) -> pd.DataFrame:
     """
-    Run a single experiment defined by `config`.
-    Returns a tidy DataFrame of per-round metrics; optionally writes to `out` (csv/parquet).
+    Minimal reference loop used by tests. Deterministic given meta.seed_root.
     """
-    cfg = load_config(config) if isinstance(config, dict) else load_config(config)  # both paths supported
-    agg_fn, sig_fn, mech_fn = _select_plugins(cfg)
-
-    N = int(cfg["engine"]["clients"])
-    T = int(cfg["engine"]["rounds"])
     R = int(cfg["engine"]["repeats"])
-    agg_kind = str(cfg["aggregator"]["kind"])
-    mech_kind = str(cfg["mechanism"]["policy"])
-    alpha = float(cfg["mechanism"]["alpha"])
-    pi = float(cfg["mechanism"]["pi"])
+    T = int(cfg["engine"]["rounds"])
+    N = int(cfg["engine"]["clients"])
 
-    ss = make_seedseq(cfg["meta"].get("seed_root", seed))
+    # resolve functions: prefer engine's built-ins for aggregators/mechanisms
+    agg = AGGREGATORS[cfg["aggregator"]["kind"]]
+    # signals/mechanisms can come from registry; tests seed registry via seed_with(...)
+    from .registry import get_signal, get_mechanism, seed_with
+    seed_with(AGGREGATORS, SIGNALS, MECHANISMS)
+    sig = get_signal(cfg["signals"]["model"])
+    mech = get_mechanism(cfg["mechanism"]["policy"])
+
+    ss = make_seedseq(cfg["meta"].get("seed_root"))
     rngs = RngBundle(ss)
 
-    rows: List[LogRow] = []
+    rows: list[LogRow] = []
     for r in range(R):
-        # Persistent latent u for this repeat
         g_rep = rngs.for_repeat(r)
         u = g_rep.normal(loc=0.0, scale=1.0, size=(N,))
-        state: Dict[str, object] = {"repeat": r}
-
         for t in range(T):
             g_round = rngs.for_round(r, t)
-            s = sig_fn(u, g_round, **cfg["signals"])  # signals from u
-            m = agg_fn(s, **cfg["aggregator"])        # aggregated monitoring signal
-            metrics = mech_fn(state, u, s, m, g_round, **cfg["mechanism"])
+            s = sig(u, g_round, **cfg["signals"])
+            m = float(agg(s, **cfg["aggregator"]))
+            metrics = mech({}, u, s, m, g_round, **cfg["mechanism"])
 
-            row: LogRow = {
-                "repeat": r,
-                "round": t,
-                "N": N,
-                "aggregator": agg_kind,
-                "mechanism": mech_kind,
-                "alpha": alpha,
-                "pi": pi,
-                "M": float(metrics.get("M", m)),
-                "PoG": float(metrics.get("PoG", 0.0)),
-                "PoC": float(metrics.get("PoC", 0.0)),
-                "DeltaU": float(metrics.get("DeltaU", 0.0)),
-                "signal_mean": float(s.mean()),
-                "signal_std": float(s.std(ddof=0)),
-                "u_mean": float(u.mean()),
-                "u_std": float(u.std(ddof=0)),
-            }
-            rows.append(row)
+            rows.append({
+                "repeat": r, "round": t, "N": N,
+                "aggregator": cfg["aggregator"]["kind"],
+                "mechanism": cfg["mechanism"]["policy"],
+                "alpha": float(cfg["mechanism"].get("alpha", 0.0)),
+                "pi": float(cfg["mechanism"].get("pi", 0.0)),
+                "M": float(metrics["M"]),
+                "PoG": float(metrics["PoG"]),
+                "PoC": float(metrics["PoC"]),
+                "DeltaU": float(metrics["DeltaU"]),
+            })
 
-            # --- optional dynamics (toy): mild drift towards M with damping alpha ---
-            # Comment out or replace with your model-specific update.
+            # toy dynamics (same as reference backend)
+            alpha = float(cfg["mechanism"].get("alpha", 0.0))
             u = (1.0 - 0.05 * alpha) * u + 0.05 * alpha * m
 
-    df = pd.DataFrame.from_records(rows)
-    if out:
-        _write(df, out, cfg["logging"]["out_format"])
-    return df
+    return pd.DataFrame.from_records(rows)
