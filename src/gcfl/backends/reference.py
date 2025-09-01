@@ -3,7 +3,6 @@ Reference backend — single-threaded, fully deterministic.
 """
 from __future__ import annotations
 from typing import Dict, List
-import numpy as np
 import pandas as pd
 
 from ..rng import RngBundle
