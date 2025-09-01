@@ -12,7 +12,7 @@ try:  # import check at module load
 except Exception as e:  # pragma: no cover
     raise RuntimeError("Ray backend requires `ray` to be installed.") from e
 
-from ..rng import RngBundle, substream, make_seedseq
+from ..rng import RngBundle, substream
 from ..types import LogRow
 from .reference import _run_one_repeat  # reuse core logic
 
