@@ -29,18 +29,14 @@ def _set_nested(cfg: Dict[str, Any], dotted_key: str, value: Any) -> None:
     d[parts[-1]] = value
 
 def _expand_spec(spec: Any) -> List[Any]:
-    """
-    Expand a grid spec:
-      - list/tuple -> as-is
-      - dict with {start, stop, num} -> np.linspace
-      - scalar -> [scalar]
-    """
     if spec is None:
         return [None]
     if isinstance(spec, (list, tuple)):
         return list(spec)
     if isinstance(spec, dict) and {"start", "stop", "num"} <= set(spec):
-        start = float(spec["start"]); stop = float(spec["stop"]); num = int(spec["num"])
+        start = float(spec["start"])
+        stop = float(spec["stop"])
+        num = int(spec["num"])
         return list(np.linspace(start, stop, num))
     return [spec]
 
@@ -135,7 +131,7 @@ def main(argv: list[str] | None = None) -> int:
         for k, v in vals.items():
             _set_nested(cfg, k, v)
         # derive a child seed per experiment
-        ss = _rng.substream(root_ss, 0x5WEEP, idx)  # type: ignore[attr-defined]
+        ss = _rng.substream(root_ss, 0x5A11EE, idx)  # type: ignore[attr-defined]
         df = backend_run(cfg, agg_fn, sig_fn, mech_fn, ss)
         # annotate sweep params onto the rows
         for k, v in vals.items():
