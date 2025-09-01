@@ -5,7 +5,7 @@ These helpers are optional and can be swapped for your paper-specific dynamics.
 They are written to be numerically stable and testable.
 """
 from __future__ import annotations
-from typing import Callable, Iterable, Tuple
+from typing import Callable
 import numpy as np
 
 MapFn = Callable[[np.ndarray], np.ndarray]
