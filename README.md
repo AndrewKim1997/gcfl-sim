@@ -1,7 +1,7 @@
 <p align="center">
-  <a href="https://arxiv.org/abs/XXXX.XXXXX">
+  <a href="https://arxiv.org/abs/2509.02391">
     <img alt="arXiv"
-         src="https://img.shields.io/badge/arXiv-XXXX.XXXXX-B31B1B?style=flat-square&logo=arXiv&logoColor=white&labelColor=B31B1B">
+         src="https://img.shields.io/badge/arXiv-2509.02391-B31B1B?style=flat-square&logo=arXiv&logoColor=white&labelColor=B31B1B">
   </a>
   <a href="https://github.com/AndrewKim1997/federated-regressive-learning/actions/workflows/ci.yml">
     <img alt="CI"
@@ -28,7 +28,7 @@
 <p align="center">
   <a href="https://github.com/AndrewKim1997/gcfl">Reproducibility repository (gcfl)</a>
   &nbsp;·&nbsp;
-  <a href="https://arxiv.org/abs/XXXX.XXXXX">arXiv preprint</a>
+  <a href="https://arxiv.org/abs/2509.02391">arXiv preprint</a>
 </p>
 
 > An **open-source simulator** inspired by the paper *“Gaming and Cooperation in Federated Learning: What Can Happen and How to Monitor It”* — built as an **independent** project so researchers and engineers can **experiment, extend, and scale** beyond the manuscript.
