@@ -23,7 +23,7 @@
   </a>
 </p>
 
-<h1 align="center">GCFL-Simulator — A Toolkit for Gaming &amp; Cooperation in FL</h1>
+<h1 align="center">GCFL-Simulator: A Toolkit for Gaming &amp; Cooperation in FL</h1>
 
 <p align="center">
   <a href="https://github.com/AndrewKim1997/gcfl">Reproducibility repository (gcfl)</a>
